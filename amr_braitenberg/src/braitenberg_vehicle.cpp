@@ -16,6 +16,7 @@ BraitenbergVehicle::BraitenbergVehicle(Type type, float factor1, float factor2)
 
 void BraitenbergVehicle::computeWheelSpeeds(float left_in, float right_in, float& left_out, float& right_out)
 {
+  // Daiem Nadir Ali
   //==================== YOUR CODE HERE ====================
   // Instructions: based on the input from the left and
   //               right sonars compute the speeds of the
