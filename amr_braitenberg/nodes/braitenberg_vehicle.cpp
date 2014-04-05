@@ -28,11 +28,22 @@ void reconfigureCallback(amr_braitenberg::BraitenbergVehicleConfig &config, uint
 
   // =======================================================
   // ROS_INFO_STREAM("Config type: "<< sizeof(config.type) <<"BraitenbergVehicle::TYPE_A"<< sizeof(BraitenbergVehicle::TYPE_A));
-  // if(config.type == BraitenbergVehicle::TYPE_A)
-  // {
+  if(config.type == BraitenbergVehicle::TYPE_A)
+  {
+    ROS_WARN("DAIEMALI: BraitenbergVehicle::TYPE_A");
     vehicle = BraitenbergVehicle::UPtr(new BraitenbergVehicle(BraitenbergVehicle::TYPE_A,config.factor1));
-  // }
-  // ROS_INFO("Vehicle reconfigured: type %i, factors %.2f and %.2f", config.type, config.factor1, config.factor2);
+  }
+  else if(config.type == BraitenbergVehicle::TYPE_B)
+  {
+    ROS_WARN("DAIEMALI: BraitenbergVehicle::TYPE_B");
+    vehicle = BraitenbergVehicle::UPtr(new BraitenbergVehicle(BraitenbergVehicle::TYPE_B,config.factor1));
+  }
+  else if(config.type == BraitenbergVehicle::TYPE_C)
+  {
+    ROS_WARN("DAIEMALI: BraitenbergVehicle::TYPE_C");
+    vehicle = BraitenbergVehicle::UPtr(new BraitenbergVehicle(BraitenbergVehicle::TYPE_C,config.factor1,config.factor2));
+  }
+  ROS_WARN("DAIEMALI: Vehicle reconfigured: type %i, factors %.2f and %.2f", config.type, config.factor1, config.factor2);
 }
 
 /** Sonar callback is triggered every time the Stage node publishes new data
@@ -58,7 +69,7 @@ void sonarCallback(const amr_msgs::Ranges::ConstPtr& msg)
 
 
   wheel_speeds_publisher.publish(m);
-  ROS_INFO("[%.2f %.2f] --> [%.2f %.2f]", msg->ranges[0].range, msg->ranges[1].range, m.speeds[0], m.speeds[1]);
+  // ROS_INFO("[%.2f %.2f] --> [%.2f %.2f]", msg->ranges[0].range, msg->ranges[1].range, m.speeds[0], m.speeds[1]);
 }
 
 int main(int argc, char** argv)
