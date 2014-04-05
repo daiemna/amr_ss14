@@ -1,5 +1,5 @@
 #include "braitenberg_vehicle.h"
-
+#include <ros/console.h>
 BraitenbergVehicle::BraitenbergVehicle()
 : type_(TYPE_A)
 , factor1_(1.0)
@@ -26,4 +26,11 @@ void BraitenbergVehicle::computeWheelSpeeds(float left_in, float right_in, float
 
 
   // =======================================================
+  ROS_INFO("20140405: left_in %2.2f right_in %2.2f",left_in,right_in);
+  //changing the sonar sensitivity by factor supplied by rqt GUI
+	left_out = left_in * factor1_; 
+	right_out = right_in * factor1_;
+
+  ROS_INFO("20140405: left_in %2.2f right_in %2.2f",left_in,right_in);
+	// }
 }

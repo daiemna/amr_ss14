@@ -27,8 +27,12 @@ void reconfigureCallback(amr_braitenberg::BraitenbergVehicleConfig &config, uint
 
 
   // =======================================================
-
-  ROS_INFO("Vehicle reconfigured: type %i, factors %.2f and %.2f", config.type, config.factor1, config.factor2);
+  // ROS_INFO_STREAM("Config type: "<< sizeof(config.type) <<"BraitenbergVehicle::TYPE_A"<< sizeof(BraitenbergVehicle::TYPE_A));
+  // if(config.type == BraitenbergVehicle::TYPE_A)
+  // {
+    vehicle = BraitenbergVehicle::UPtr(new BraitenbergVehicle(BraitenbergVehicle::TYPE_A,config.factor1));
+  // }
+  // ROS_INFO("Vehicle reconfigured: type %i, factors %.2f and %.2f", config.type, config.factor1, config.factor2);
 }
 
 /** Sonar callback is triggered every time the Stage node publishes new data
@@ -39,16 +43,22 @@ void sonarCallback(const amr_msgs::Ranges::ConstPtr& msg)
 
   //==================== YOUR CODE HERE ====================
   // Instructions: based on the ranges reported by the two
-  //               sonars compute the wheel speds and fill
+  //               sonars compute the wheel speeds and fill
   //               in the WheelSpeeds message.
   //
   // Hint: use vehicle->computeWheelSpeeds(...) function.
 
 
   // =======================================================
+    m.speeds.resize(2);
+    vehicle->computeWheelSpeeds(msg->ranges[0].range/msg->ranges[0].max_range,
+                                msg->ranges[1].range/msg->ranges[0].max_range,
+                                m.speeds[0],
+                                m.speeds[1]);
+
 
   wheel_speeds_publisher.publish(m);
-  ROS_DEBUG("[%.2f %.2f] --> [%.2f %.2f]", msg->ranges[0].range, msg->ranges[1].range, m.speeds[0], m.speeds[1]);
+  ROS_INFO("[%.2f %.2f] --> [%.2f %.2f]", msg->ranges[0].range, msg->ranges[1].range, m.speeds[0], m.speeds[1]);
 }
 
 int main(int argc, char** argv)

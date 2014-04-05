@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/Vector3.h>
 
 #include <amr_msgs/WheelSpeeds.h>
 
@@ -21,16 +22,21 @@ void wheelSpeedCallback(const amr_msgs::WheelSpeeds::ConstPtr& msg)
 
   geometry_msgs::Twist twist;
 
-  //daiem nadir ali
   //==================== YOUR CODE HERE ====================
   // Instructions: compute linear and angular components and
   //               fill in the twist message.
-
-
   //========================================================
 
+
+  float linearComponent = (msg->speeds[0] + msg->speeds[1])*wheel_diameter/2;
+  float angularComponent = (msg->speeds[0] - msg->speeds[1])*wheel_diameter/distance_between_wheels;
+
+  twist.linear.x = linearComponent;
+
+  twist.angular.z = angularComponent;
+
   velocity_publisher.publish(twist);
-  ROS_DEBUG("[%.2f %.2f] --> [%.2f %.2f]", msg->speeds[0], msg->speeds[1], twist.linear.x, twist.angular.z);
+  ROS_WARN("[%.2f %.2f] --> [%.2f %.2f]", msg->speeds[0], msg->speeds[1], twist.linear.x, twist.angular.z);
 }
 
 int main(int argc, char** argv)
