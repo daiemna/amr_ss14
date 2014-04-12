@@ -294,8 +294,8 @@ private:
 
       velocity_controller_ = VelocityController::UPtr(
         new OmniVelocityController(
-          max_linear_velocity, linear_tolerance,
-          max_angular_velocity, angular_tolerance
+          max_linear_velocity, max_linear_acceleration, linear_tolerance,
+          max_angular_velocity, max_angular_acceleration, angular_tolerance
         )
       );
 

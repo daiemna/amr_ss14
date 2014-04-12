@@ -15,8 +15,8 @@ class OmniVelocityController : public VelocityController
 
 public:
 
-  OmniVelocityController(double l_max_vel, double l_tolerance,
-                         double a_max_vel, double a_tolerance);
+  OmniVelocityController(double l_max_vel, double l_max_acc, double l_tolerance,
+                         double a_max_vel, double a_max_acc, double a_tolerance);
 
   virtual void setTargetPose(const Pose& pose);
 
@@ -32,9 +32,11 @@ private:
   bool angular_complete_;
 
   double l_max_vel_;
+  double l_max_acc_;
   double l_tolerance_;
 
   double a_max_vel_;
+  double a_max_acc_;
   double a_tolerance_;
   
 //==================================================================
