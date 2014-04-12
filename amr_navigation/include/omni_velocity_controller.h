@@ -13,7 +13,30 @@ class OmniVelocityController : public VelocityController
 //               implement the VelocityController interface. You may
 //               use the DiffVelocityController as an example.
 
+public:
 
+  OmniVelocityController(double l_max_vel, double l_tolerance,
+                         double a_max_vel, double a_tolerance);
+
+  virtual void setTargetPose(const Pose& pose);
+
+  virtual bool isTargetReached() const;
+
+  virtual Velocity computeVelocity(const Pose& actual_pose);
+
+private:
+
+  Pose target_pose_;
+
+  bool linear_complete_;
+  bool angular_complete_;
+
+  double l_max_vel_;
+  double l_tolerance_;
+
+  double a_max_vel_;
+  double a_tolerance_;
+  
 //==================================================================
 
 };

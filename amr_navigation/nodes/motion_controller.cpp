@@ -292,6 +292,12 @@ private:
       //       and adjust the arguments in the call to the constructor to
       //       conform to what you have implemented in that class.
 
+      velocity_controller_ = VelocityController::UPtr(
+        new OmniVelocityController(
+          max_linear_velocity, linear_tolerance,
+          max_angular_velocity, angular_tolerance
+        )
+      );
 
       //==================================================================
     }
