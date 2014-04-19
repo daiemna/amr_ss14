@@ -46,6 +46,7 @@ Velocity OmniVelocityController::computeVelocity(const Pose& actual_pose)
     double linear_dist = getDistance(target_pose_, actual_pose);
     double angular_dist = getShortestAngle(target_pose_.theta, actual_pose.theta);
 
+    
     Velocity nextVelocity;
   	vel = l_max_vel_ * (linear_dist/4);
   	vel = vel > l_max_vel_ ? l_max_vel_ : vel;

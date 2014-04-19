@@ -17,6 +17,7 @@ a preemption is requested and returns 'preempted' if that is the case.
 
 PACKAGE = 'amr_bugs'
 
+import rospy
 import roslib
 roslib.load_manifest(PACKAGE)
 import smach
@@ -24,7 +25,6 @@ from preemptable_state import PreemptableState
 from math import copysign
 from types import MethodType
 from geometry_msgs.msg import Twist
-
 
 __all__ = ['construct']
 
@@ -45,10 +45,19 @@ __all__ = ['construct']
 #       that the corresponding variables ('front_min' and 'clearance') are
 #       available in the userdata dictionary.
 #
-#           def search(ud):
-#               if ud.front_min < ud.clearance:
-#                   return 'found_obstacle'
-#               ud.velocity = (1, 0, 0)
+
+def search(ud):
+    rospy.loginfo("Mode is {0}".format(ud.mode));
+    rospy.loginfo("min distance is: {0}".format(ud.clearance));
+    rospy.loginfo("distance Left: {0}".format(ud.front_min));
+    if ud.front_min < ud.clearance:
+        ud.velocity = (0,0,0)
+        return 'found_obstacle'
+    ud.velocity = (0.1, 0, 0)
+
+# def initState(userdata):
+#     rospy.loginfo("Mode is %s".format(userdata.mode));
+#     rospy.loginfo("min distance is: %s".format(userdata.clearance))
 
 
 #==============================================================================
@@ -85,7 +94,7 @@ def set_ranges(self, ranges):
     #       functions independent of wallfollowing mode by smart preprocessing
     #       of the sonar readings.
 
-
+    self.userdata.front_min = min(ranges[3].range, ranges[4].range);
     #==========================================================================
 
 
@@ -148,12 +157,12 @@ def construct():
         #               you have implemented.
         #               Below is an example how to add a state:
         #
-        #                   smach.StateMachine.add('SEARCH',
-        #                                          PreemptableState(search,
-        #                                                           input_keys=['front_min', 'clearance'],
-        #                                                           output_keys=['velocity'],
-        #                                                           outcomes=['found_obstacle']),
-        #                                          transitions={'found_obstacle': 'ANOTHER_STATE'})
+        # smach.StateMachine.add('SEARCH',
+        # PreemptableState(Search,
+        # input_keys=['front_min', 'clearance'],
+        # output_keys=['velocity'],
+        # outcomes=['found_obstacle']),
+        # transitions={'found_obstacle': 'SEARCH'})
         #
         #               First argument is the state label, an arbitrary string
         #               (by convention should be uppercase). Second argument is
@@ -170,6 +179,13 @@ def construct():
         # Note: The first state that you add will become the initial state of
         #       the state machine.
 
+        
+        smach.StateMachine.add('SEARCH',
+        PreemptableState(search,
+        input_keys=['front_min', 'clearance', 'mode'],
+        output_keys=['velocity'],
+        outcomes=['found_obstacle']),
+        transitions={'found_obstacle': 'SEARCH'})
 
         #======================================================================
     return sm
