@@ -59,6 +59,8 @@ __all__ = ['construct']
 
 def charge(ud):
     if ud.front_min < ud.clearance:
+        if ud.front_alignment < ud.angularClearance and ud.back_alignment < ud.angularClearance :
+            return 'found_corner';
         ud.velocity = (0,0,0)
         return 'found_obstacle_infront'
     ud.velocity = (1, 0, 0)
@@ -81,12 +83,13 @@ def rotate(ud):
             return 'front_back_alignment_done';
 
 def corner():
-    if ud.front_alignment < ud.angularClearance and ud.back_alignment < ud.angularClearance < ud.front_min < ud.clearance:
+    if ud.front_alignment < ud.angularClearance and ud.back_alignment < ud.angularClearance:
         #concave corner
         ud.velocity = (0,0,1*mode_sign(ud.mode));
         return 'rotate_bot';
     else:
-        reurn "move_forward"
+        ud.velocity = (0,0,0);
+        return "move_forward"
 
 
     # if ud.front_alignment <= ud.angularClearance:
@@ -279,10 +282,11 @@ def construct():
         
         smach.StateMachine.add('CHARGE',
         PreemptableState(charge,
-        input_keys=['front_min', 'clearance'],
+        input_keys=['front_min', 'clearance','angularClearance','front_alignment','back_alignment'],
         output_keys=['velocity'],
-        outcomes=['found_obstacle_infront']),
-        transitions={'found_obstacle_infront': 'ROTATE'});
+        outcomes=['found_obstacle_infront','found_corner']),
+        transitions={'found_obstacle_infront': 'ROTATE',
+                    'found_corner' : 'CORNER'});
 
         smach.StateMachine.add('ROTATE',
         PreemptableState(rotate,
@@ -291,6 +295,14 @@ def construct():
         outcomes=['front_back_alignment_done','repeat_state']),
         transitions={'front_back_alignment_done': 'CHARGE',
         'repeat_state':'ROTATE'});
+
+        smach.StateMachine.add('CORNER',
+        PreemptableState(corner,
+        input_keys=['back_alignment', 'front_alignment', 'angularClearance', 'mode', 'front_min'],
+        output_keys=['velocity'],
+        outcomes=['move_forward','rotate_bot']),
+        transitions={'move_forward': 'CHARGE',
+        'rotate_bot':'ROTATE'});
 
         # smach.StateMachine.add('ROTATE',
         # PreemptableState(rotate,
