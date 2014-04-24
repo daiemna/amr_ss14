@@ -13,7 +13,7 @@
   <node pkg="amr_bugs" type="bug2.py" name="bug2" output="screen" required="true"/>
 
   <!-- Wallfollower node, start disabled -->
-  <node pkg="amr_bugs" type="wallfollower.py" name="wallfollower" required="true">
+  <node pkg="amr_bugs" type="wallfollower" name="wallfollower" required="true">
     <param name="enable_at_startup" value="false" type="bool"/>
   </node>
 

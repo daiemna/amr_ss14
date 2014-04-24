@@ -7,7 +7,7 @@
   </include>
 
   <!-- Wallfollower node -->
-  <node pkg="amr_bugs" type="wallfollower.py" name="wallfollower" required="true" output="screen"/>
+  <node pkg="amr_bugs" type="wallfollower" name="wallfollower" required="true" output="screen"/>
 
   <!-- Dynamic reconfigure GUI -->
   <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="rqt_reconfigure"/>

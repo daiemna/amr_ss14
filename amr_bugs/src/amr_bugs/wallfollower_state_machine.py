@@ -26,6 +26,7 @@ from preemptable_state import PreemptableState
 from math import copysign
 from types import MethodType
 from geometry_msgs.msg import Twist
+# from wallfollower_states import *
 
 __all__ = ['construct']
 
@@ -46,66 +47,39 @@ __all__ = ['construct']
 #       that the corresponding variables ('front_min' and 'clearance') are
 #       available in the userdata dictionary.
 #
-
-# def search(ud):
-#     rospy.loginfo("Mode is {0}".format(ud.mode));
-#     rospy.loginfo("min distance is: {0}".format(ud.clearance));
-#     rospy.loginfo("distance Left: {0}".format(ud.front_min));
-
-#     if ud.front_min < ud.clearance:
-#         ud.velocity = (0,0,0)
-#         return 'found_obstacle'
-#     ud.velocity = (0.1, 0, 0)
-
 def charge(ud):
+    # rospy.logwarn('front_min : {0}'.format(ud.front_min));
     if ud.front_min < ud.clearance:
-        if ud.front_alignment < ud.angularClearance and ud.back_alignment < ud.angularClearance :
-            return 'found_corner';
         ud.velocity = (0,0,0)
         return 'found_obstacle_infront'
-    ud.velocity = (1, 0, 0)
+    else:
+        ud.velocity = (1,0,0);
+        return 'charge';
+    # elif ud.front_min < ud.clearance and ud.side_min < ud.clearance:
+    #     ud.velocity = (1, 0, 0);
+    #     return 'obstacle_infront_and_side';
 
-#rotate till robot is aligned with wall    
 def rotate(ud):
     # rospy.logwarn("front {0},back {1},clearance {2}".format(ud.front_alignment,ud.back_alignment,ud.angularClearance));
+    # equate front_alignment and back_alignment with tolarance.
     if ud.front_alignment < ud.angularClearance and ud.back_alignment < ud.angularClearance:
+        # rospy.logwarn("front_back_alignment_done");
         ud.velocity = (0,0,0);
-        return 'front_back_alignment_done';
+        return 'charge';
+    elif ud.front_min < ud.clearance or ud.side_min < ud.clearance:
+        ud.velocity = (0,1*mode_sign(ud.mode),1*mode_sign(ud.mode));
+        # return 'charge';
     else:
-        if ud.front_alignment > ud.back_alignment and ud.front_alignment > angularClearance:
-            ud.velocity = (0,0,-1*mode_sign(ud.mode));
-            return 'repeat_state';
-        elif ud.front_alignment < ud.back_alignment and ud.back_alignment > ud.angularClearance:
-            ud.velocity = (0,0,1*mode_sign(ud.mode));
-            return 'repeat_state';
-        else:
-            ud.velocity = (0,0,0);
-            return 'front_back_alignment_done';
-
-def corner():
-    if ud.front_alignment < ud.angularClearance and ud.back_alignment < ud.angularClearance:
-        #concave corner
+        # rospy.logwarn("charge");
         ud.velocity = (0,0,1*mode_sign(ud.mode));
-        return 'rotate_bot';
-    else:
-        ud.velocity = (0,0,0);
-        return "move_forward"
+        return 'charge';
+        # elif ud.front_alignment < ud.back_alignment and ud.back_alignment > ud.angularClearance:
+        #     ud.velocity = (0,0,1*mode_sign(ud.mode));
+        #     return 'repeat_state';
+        # else:
+        #     ud.velocity = (0,0,0);
+        #     return 'front_back_alignment_done';
 
-
-    # if ud.front_alignment <= ud.angularClearance:
-    #     if ud.front_alignment < ud.angularClearance and ud.back_alignment < ud.angularClearance:
-    #         ud.velocity = (0,0,0);
-    #         return 'front_back_alignment_done'
-    #     ud.velocity = (0,0,0);
-    #     return 'front_alignment_done'
-
-    # elif ud.back_alignment <= ud.angularClearance:
-    #     if ud.front_alignment < ud.angularClearance and ud.back_alignment < ud.angularClearance:
-    #         ud.velocity = (0,0,0);
-    #         return 'front_back_alignment_done'
-    #     ud.velocity = (0,0,0);
-    #     return 'back_alignment_done'
-    # ud.velocity = (0,0,1);
 
 #==============================================================================
 
@@ -152,18 +126,23 @@ def set_ranges(self, ranges):
     # if max_range = 1 disable the normalization;
     max_range = 1;
     # sonars for front clearance
-    self.userdata.front_min = min(ranges[2].range/max_range,ranges[5].range/max_range,ranges[3].range/max_range, ranges[4].range/max_range);
+    self.userdata.front_min = min(ranges[3].range/max_range,
+                                ranges[4].range/max_range,
+                                ranges[5].range/max_range,
+                                ranges[2].range/max_range);
 
     # sonars for side clearance either left or right sonar
     # will be assigned min(sonar_8,sonar_7) in case of right wall following
-    self.userdata.side_min = min(ranges[self.userdata.rangeSonars[0]].range/max_range,
-        ranges[self.userdata.rangeSonars[1]].range/max_range);
+    self.userdata.side_min = min(ranges[self.userdata.sideSonar[0]].range/max_range,
+        ranges[self.userdata.sideSonar[1]].range/max_range);
 
     # front anligenment will be assgined range of sonar 6 in case of right wall following
     self.userdata.front_alignment = ranges[self.userdata.alignmentSonars[0]].range/max_range;
 
     # back_alignment will be assgined range of sonar 9 in case of right wall following
     self.userdata.back_alignment = ranges[self.userdata.alignmentSonars[1]].range/max_range;
+    
+    self.userdata.opp_side_min = min(ranges[oppSideSonar[:]].range/max_range);   
 
     #==========================================================================
 
@@ -183,6 +162,7 @@ def get_twist(self):
     twist = Twist()
     twist.linear.x = self.userdata.velocity[0] * self.userdata.front_min/max_range;
     twist.linear.y = self.userdata.velocity[1] * (min(self.userdata.front_alignment,self.userdata.back_alignment)/max_range);
+    # twist.linear.y = self.userdata.velocity[1] * self.userdata.opp_side_min;
     twist.linear.z = 0
     twist.angular.x = 0
     twist.angular.y = 0
@@ -190,7 +170,8 @@ def get_twist(self):
 
     # -0.262 = sin(50) 50 is angle of front_alignment or back_alignment from robot reference position
     # twist.angular.z = self.userdata.velocity[2] * math.atan((-0.262 * min(self.userdata.front_alignment,self.userdata.back_alignment))/(self.userdata.front_min/2));
-    rospy.logwarn("front {0},back {1},clearance {2}".format(self.userdata.front_alignment,self.userdata.back_alignment,self.userdata.angularClearance));
+    # rospy.logwarn("front {0},back {1},clearance {2}\n".format(self.userdata.front_alignment,self.userdata.back_alignment,self.userdata.angularClearance));
+    # rospy.logwarn("velocity = {0}".format(self.userdata.velocity));
     twist.angular.z = self.userdata.velocity[2] * 0.1;
 
     # rospy.logwarn("angular clearance : {0} rotation {1}".format(self.userdata.angularClearance,twist.angular.z));
@@ -224,11 +205,13 @@ def set_config(self, config):
     # handel left and right wallfollowing here
     if self.userdata.mode == 0:
         #LEFT wallfollowing
-        self.userdata.rangeSonars = [0,15];
+        self.userdata.sideSonar = [0,15];
+        self.userdata.oppSideSonar = [4,5,6,7,8,9,10,11];
         self.userdata.alignmentSonars = [1,14];
     else:
         #RIGTH wallfollowing
-        self.userdata.rangeSonars = [8,7];
+        self.userdata.sideSonar = [8,7];
+        self.userdata.oppSideSonar = [3,2,1,0,15,14,13,12];
         self.userdata.alignmentSonars = [6,9];
     return config
 
@@ -246,7 +229,9 @@ def construct():
     sm.userdata.angularClearance = 1.0;
     sm.userdata.ranges = None
     sm.userdata.configChaged = False;
-    sm.userdata.rangeSonars = [8,7];
+    sm.userdata.sideSonar = [8,7];
+    sm.userdata.oppSideSonar = [15,0];
+    # sm.userdata.opp_side_min = 0.6;
     sm.userdata.alignmentSonars = [6,9];
     sm.userdata.range_max_val = 5;
 
@@ -284,34 +269,25 @@ def construct():
         PreemptableState(charge,
         input_keys=['front_min', 'clearance','angularClearance','front_alignment','back_alignment'],
         output_keys=['velocity'],
-        outcomes=['found_obstacle_infront','found_corner']),
+        outcomes=['found_obstacle_infront','charge']),
         transitions={'found_obstacle_infront': 'ROTATE',
-                    'found_corner' : 'CORNER'});
+                     'charge' : 'CHARGE'});
 
         smach.StateMachine.add('ROTATE',
         PreemptableState(rotate,
-        input_keys=['back_alignment', 'front_alignment', 'angularClearance', 'mode'],
+        input_keys=['back_alignment', 'front_alignment', 'angularClearance', 'mode', 'front_min', 'side_min', 'clearance'],
         output_keys=['velocity'],
-        outcomes=['front_back_alignment_done','repeat_state']),
-        transitions={'front_back_alignment_done': 'CHARGE',
-        'repeat_state':'ROTATE'});
+        outcomes=['front_back_alignment_done','charge']),
+        transitions={'charge': 'CHARGE',
+                     'front_back_alignment_done' : 'ROTATE'});
 
-        smach.StateMachine.add('CORNER',
-        PreemptableState(corner,
-        input_keys=['back_alignment', 'front_alignment', 'angularClearance', 'mode', 'front_min'],
-        output_keys=['velocity'],
-        outcomes=['move_forward','rotate_bot']),
-        transitions={'move_forward': 'CHARGE',
-        'rotate_bot':'ROTATE'});
-
-        # smach.StateMachine.add('ROTATE',
-        # PreemptableState(rotate,
-        # input_keys=['back_alignment', 'front_alignment', 'angularClearance'],
+        # smach.StateMachine.add('CORNER',
+        # PreemptableState(corner,
+        # input_keys=['back_alignment', 'front_alignment', 'angularClearance', 'mode', 'front_min'],
         # output_keys=['velocity'],
-        # outcomes=['front_back_alignment_done','front_alignment_done', 'back_alignment_done']),
-        # transitions={'front_back_alignment_done': 'CHARGE',
-        # 'front_alignment_done':'ROTATE',
-        # 'back_alignment_done':'ROTATE'});
+        # outcomes=['move_forward','rotate_bot']),
+        # transitions={'move_forward': 'CHARGE',
+        # 'rotate_bot':'ROTATE'});
 
         #======================================================================
     return sm
