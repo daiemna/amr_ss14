@@ -2,6 +2,7 @@
 
 import rospy
 import math
+import planar
 from planar import Point, Vec2, EPSILON
 from planar.c import Line
 from math import degrees
@@ -62,13 +63,16 @@ class BugBrain:
         return -1;
     def RIGHT_SIDE(self):
         return 1;
-    #the tolerence == palanar.EPISILON does not work good
     def TOLERANCE(self):
-        return 0.03;
+        return planar.EPSILON;
 
     def __init__(self, goal_x, goal_y, side):
         self.wall_side = side;
         self.wp_destination = Point(goal_x, goal_y);
+        self.path_started = False;
+        #the tolerence == planar.EPSILON at default value does not work good
+        planar.set_epsilon(0.3);
+
         rospy.loginfo("DAIEM: destination: {0}, wall_side: {1} self: ".format(self.wp_destination,self.wall_side));
 
     """
@@ -77,7 +81,7 @@ class BugBrain:
                 signed distance from the robot.
                 can be obtained by path_line.distance_to(ROBOT CURRENT POSITION).
     """    
-    def is_destenation_on_otherside(self,distance):
+    def is_destination_opposite_to_wall(self,distance):
         direction = math.copysign(1,distance);
 
         if(self.wall_side == self.LEFT_WALLFOLLOWING()):
@@ -121,6 +125,16 @@ class BugBrain:
         This function is regularly called from the wallfollower state to check
         the brain's belief about whether the goal is unreachable.
         """
+        distance_to_path= self.ln_path.distance_to(Point(x,y));
+        # distance_to_destination = self.ln_current_orentation.distance_to(self.wp_destination);
+
+        # if(abs(distance_to_path) < self.TOLERANCE() and
+        #  not self.is_destination_opposite_to_wall(distance_to_destination)):
+        #     return True
+        rospy.loginfo("DAIEM: ({0},{1},{2}) : distance == 0, at starting point, path_started ".format(abs(distance_to_path) < self.TOLERANCE(),Vec2(x,y).almost_equals(self.wp_wf_start), self.path_started));
+        if(abs(distance_to_path) < self.TOLERANCE() and Vec2(x,y).almost_equals(self.wp_wf_start) and self.path_started):
+            return True
+
         return False
 
     def is_time_to_leave_wall(self, x, y, theta):
@@ -137,15 +151,23 @@ class BugBrain:
         self.ln_current_orentation = Line(Vec2(x,y),self.current_direction);
         self.ln_distance = self.ln_path.perpendicular(self.wp_current_position);
         
+        
+        distance_to_path= self.ln_path.distance_to(Point(x,y));
+        self.distance_to_path = distance_to_path;
+        distance_to_destination = self.ln_current_orentation.distance_to(self.wp_destination);
+
+        # rospy.loginfo("DAIEM: distance to path is: {0} path_started : {1}".format(abs(distance_to_path),self.path_started));
+        if(abs(distance_to_path) > 1):
+            self.path_started =True;
+
         """
         checking if distance to the straight path is approx. 0 and
         if destenation on the opposit side of wall then leave the path
         NOTE and TODO: works only for the circles not for complex path.
         """
-        distance_to_path= self.ln_path.distance_to(Point(x,y));
-        self.distance_to_path = distance_to_path;
-        distance_to_destination = self.ln_current_orentation.distance_to(self.wp_destination);
-        if(abs(distance_to_path) < self.TOLERANCE() and self.is_destenation_on_otherside(distance_to_destination)):
+        if(abs(distance_to_path) < self.TOLERANCE() and
+         self.is_destination_opposite_to_wall(distance_to_destination)):
+         # self.ln_distance.almost_equals(self.ln_current_orentation)):
             self.wp_wf_stop = Point(x,y);
             return True;
 
