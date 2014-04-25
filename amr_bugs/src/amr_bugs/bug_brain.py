@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 import rospy
-from planar import Point, Vec2
+import math
+from planar import Point, Vec2, EPSILON
 from planar.c import Line
 from math import degrees
 
@@ -51,19 +52,44 @@ from math import degrees
 
 class BugBrain:
 
-    TOLERANCE = 0.3
-    # destination = Point(0,0);
-    # wall_side = 0;
-
-    LEFT_WALLFOLLOWING = 0;
-    RIGHT_WALLFOLLOWING = 1;
+    
+    # declearing constants
+    def LEFT_WALLFOLLOWING(self):
+        return 0;
+    def RIGHT_WALLFOLLOWING(self):
+        return 1;
+    def LEFT_SIDE(self):
+        return -1;
+    def RIGHT_SIDE(self):
+        return 1;
+    #the tolerence == palanar.EPISILON does not work good
+    def TOLERANCE(self):
+        return 0.03;
 
     def __init__(self, goal_x, goal_y, side):
+        self.wall_side = side;
         self.wp_destination = Point(goal_x, goal_y);
-        wall_side = side;
-        rospy.loginfo("DAIEM: destination: {0}, wall_side: {1} self: ".format(self.wp_destination,wall_side));
+        rospy.loginfo("DAIEM: destination: {0}, wall_side: {1} self: ".format(self.wp_destination,self.wall_side));
 
-        
+    """
+        method to determin if the destenation is on opposit side of wall being followed.
+        @param: distance
+                signed distance from the robot.
+                can be obtained by path_line.distance_to(ROBOT CURRENT POSITION).
+    """    
+    def is_destenation_on_otherside(self,distance):
+        direction = math.copysign(1,distance);
+
+        if(self.wall_side == self.LEFT_WALLFOLLOWING()):
+            if(direction == self.RIGHT_SIDE()):
+                return True;
+            else:
+                return False;
+        else:
+            if(direction == self.LEFT_SIDE()):
+                return True;
+            else:
+                return False;
 
     def follow_wall(self, x, y, theta):
         """
@@ -103,17 +129,25 @@ class BugBrain:
         the brain's belief about whether it is the right time (or place) to
         leave the wall and move straight to the goal.
         """
+
         theta = degrees(theta);
         self.current_theta  =theta;
         self.wp_current_position = Point(x,y);
         self.current_direction = Vec2.polar(angle = theta,length = 1);
         self.ln_current_orentation = Line(Vec2(x,y),self.current_direction);
         self.ln_distance = self.ln_path.perpendicular(self.wp_current_position);
+        
+        """
+        checking if distance to the straight path is approx. 0 and
+        if destenation on the opposit side of wall then leave the path
+        NOTE and TODO: works only for the circles not for complex path.
+        """
         distance_to_path= self.ln_path.distance_to(Point(x,y));
         self.distance_to_path = distance_to_path;
-        # if(abs(distance_to_path) < TOLERANCE):
-        #     distance_to_destination = self.ln_current_orentation.distance_to(self.wp_destination);
-        #     if(distance_to_destination < )
+        distance_to_destination = self.ln_current_orentation.distance_to(self.wp_destination);
+        if(abs(distance_to_path) < self.TOLERANCE() and self.is_destenation_on_otherside(distance_to_destination)):
+            self.wp_wf_stop = Point(x,y);
+            return True;
 
         return False
 
