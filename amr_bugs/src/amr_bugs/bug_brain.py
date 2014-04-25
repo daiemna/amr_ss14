@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+import rospy
+from planar import Point, Vec2
+from planar.c import Line
+from math import degrees
+
 
 #=============================== YOUR CODE HERE ===============================
 # Instructions: complete the currently empty BugBrain class. A new instance of
@@ -47,9 +52,18 @@
 class BugBrain:
 
     TOLERANCE = 0.3
+    # destination = Point(0,0);
+    # wall_side = 0;
+
+    LEFT_WALLFOLLOWING = 0;
+    RIGHT_WALLFOLLOWING = 1;
 
     def __init__(self, goal_x, goal_y, side):
-        pass
+        self.wp_destination = Point(goal_x, goal_y);
+        wall_side = side;
+        rospy.loginfo("DAIEM: destination: {0}, wall_side: {1} self: ".format(self.wp_destination,wall_side));
+
+        
 
     def follow_wall(self, x, y, theta):
         """
@@ -57,6 +71,15 @@ class BugBrain:
         state.
         """
         # compute and store necessary variables
+        theta = degrees(theta);
+        position = Point(x,y);
+
+        self.ln_path = Line.from_points([position,self.wp_destination]);
+        # saving where it started wall following
+        self.wp_wf_start = position;
+        rospy.loginfo("DAIEM: position: {0} theta : {1}".format(position,theta));
+        rospy.loginfo("DAIEM: line: {0}".format(self.ln_path));
+
         pass
 
     def leave_wall(self, x, y, theta):
@@ -80,6 +103,18 @@ class BugBrain:
         the brain's belief about whether it is the right time (or place) to
         leave the wall and move straight to the goal.
         """
+        theta = degrees(theta);
+        self.current_theta  =theta;
+        self.wp_current_position = Point(x,y);
+        self.current_direction = Vec2.polar(angle = theta,length = 1);
+        self.ln_current_orentation = Line(Vec2(x,y),self.current_direction);
+        self.ln_distance = self.ln_path.perpendicular(self.wp_current_position);
+        distance_to_path= self.ln_path.distance_to(Point(x,y));
+        self.distance_to_path = distance_to_path;
+        # if(abs(distance_to_path) < TOLERANCE):
+        #     distance_to_destination = self.ln_current_orentation.distance_to(self.wp_destination);
+        #     if(distance_to_destination < )
+
         return False
 
 #==============================================================================
