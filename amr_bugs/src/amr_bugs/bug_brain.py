@@ -73,14 +73,10 @@ class BugBrain:
         #the tolerence == planar.EPSILON at default value does not work good
         planar.set_epsilon(0.3);
 
-        rospy.loginfo("DAIEM: destination: {0}, wall_side: {1} self: ".format(self.wp_destination,self.wall_side));
-
-    """
-        method to determin if the destenation is on opposit side of wall being followed.
-        @param: distance
-                signed distance from the robot.
-                can be obtained by path_line.distance_to(ROBOT CURRENT POSITION).
-    """    
+    # method to determin if the destenation is on opposit side of wall being followed.
+    # @param: distance
+    #         signed distance from the robot to goal.
+    #         can be obtained by path_line.distance_to(ROBOT CURRENT POSITION).
     def is_destination_opposite_to_wall(self,distance):
         direction = math.copysign(1,distance);
 
@@ -107,8 +103,6 @@ class BugBrain:
         self.ln_path = Line.from_points([position,self.wp_destination]);
         # saving where it started wall following
         self.wp_wf_start = position;
-        rospy.loginfo("DAIEM: position: {0} theta : {1}".format(position,theta));
-        rospy.loginfo("DAIEM: line: {0}".format(self.ln_path));
 
         pass
 
@@ -118,6 +112,7 @@ class BugBrain:
         state.
         """
         # compute and store necessary variables
+        self.path_started = False;
         pass
 
     def is_goal_unreachable(self, x, y, theta):
@@ -125,14 +120,13 @@ class BugBrain:
         This function is regularly called from the wallfollower state to check
         the brain's belief about whether the goal is unreachable.
         """
+        # if the robot goes around an obstacle and
+        # reaches the starting point and the destenation is still not reached then
+        # the goal is unreachable.
         distance_to_path= self.ln_path.distance_to(Point(x,y));
-        # distance_to_destination = self.ln_current_orentation.distance_to(self.wp_destination);
 
-        # if(abs(distance_to_path) < self.TOLERANCE() and
-        #  not self.is_destination_opposite_to_wall(distance_to_destination)):
-        #     return True
-        rospy.loginfo("DAIEM: ({0},{1},{2}) : distance == 0, at starting point, path_started ".format(abs(distance_to_path) < self.TOLERANCE(),Vec2(x,y).almost_equals(self.wp_wf_start), self.path_started));
         if(abs(distance_to_path) < self.TOLERANCE() and Vec2(x,y).almost_equals(self.wp_wf_start) and self.path_started):
+            rospy.logwarn("UNREACHABLE POINT!");
             return True
 
         return False
@@ -146,17 +140,19 @@ class BugBrain:
 
         theta = degrees(theta);
         self.current_theta  =theta;
+
         self.wp_current_position = Point(x,y);
         self.current_direction = Vec2.polar(angle = theta,length = 1);
+        #Robot Orientation Line.
         self.ln_current_orentation = Line(Vec2(x,y),self.current_direction);
+
+        # the prependicular line to the path
         self.ln_distance = self.ln_path.perpendicular(self.wp_current_position);
         
         
         distance_to_path= self.ln_path.distance_to(Point(x,y));
         self.distance_to_path = distance_to_path;
         distance_to_destination = self.ln_current_orentation.distance_to(self.wp_destination);
-
-        # rospy.loginfo("DAIEM: distance to path is: {0} path_started : {1}".format(abs(distance_to_path),self.path_started));
         if(abs(distance_to_path) > 1):
             self.path_started =True;
 
@@ -167,7 +163,6 @@ class BugBrain:
         """
         if(abs(distance_to_path) < self.TOLERANCE() and
          self.is_destination_opposite_to_wall(distance_to_destination)):
-         # self.ln_distance.almost_equals(self.ln_current_orentation)):
             self.wp_wf_stop = Point(x,y);
             return True;
 
