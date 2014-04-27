@@ -162,7 +162,8 @@ class BugBrain:
         NOTE and TODO: works only for the circles not for complex path.
         """
         if(abs(distance_to_path) < self.TOLERANCE() and
-         self.is_destination_opposite_to_wall(distance_to_destination)):
+         self.is_destination_opposite_to_wall(distance_to_destination) and 
+         self.path_started): # is robot started following wall!
             self.wp_wf_stop = Point(x,y);
             return True;
 
