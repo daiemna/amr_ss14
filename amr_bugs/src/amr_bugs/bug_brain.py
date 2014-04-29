@@ -71,8 +71,8 @@ class BugBrain:
         self.wp_destination = Point(goal_x, goal_y);
         self.path_started = False;
         #the tolerence == planar.EPSILON at default value does not work good
-        planar.set_epsilon(0.3);
-
+        planar.set_epsilon(0.1);
+        self.distance_when_left = 9999;
     # method to determin if the destenation is on opposit side of wall being followed.
     # @param: distance
     #         signed distance from the robot to goal.
@@ -103,8 +103,7 @@ class BugBrain:
         self.ln_path = Line.from_points([position,self.wp_destination]);
         # saving where it started wall following
         self.wp_wf_start = position;
-
-        pass
+        
 
     def leave_wall(self, x, y, theta):
         """
@@ -113,6 +112,9 @@ class BugBrain:
         """
         # compute and store necessary variables
         self.path_started = False;
+        self.distance_when_left = self.wp_destination.distance_to(Point(x,y));
+        self.wp_left_wall_at = Point(x,y);
+        # self.wp_when_left = 
         pass
 
     def is_goal_unreachable(self, x, y, theta):
@@ -125,7 +127,10 @@ class BugBrain:
         # the goal is unreachable.
         distance_to_path= self.ln_path.distance_to(Point(x,y));
 
-        if(abs(distance_to_path) < self.TOLERANCE() and Vec2(x,y).almost_equals(self.wp_wf_start) and self.path_started):
+        if(abs(distance_to_path) < self.TOLERANCE() 
+            and Vec2(x,y).almost_equals(self.wp_wf_start) 
+            and self.path_started):
+            # self.path_started = False;
             rospy.logwarn("UNREACHABLE POINT!");
             return True
 
@@ -156,14 +161,16 @@ class BugBrain:
         if(abs(distance_to_path) > 1):
             self.path_started =True;
 
+        self.distance_to_goal = self.wp_destination.distance_to(Point(x,y));
         """
         checking if distance to the straight path is approx. 0 and
         if destenation on the opposit side of wall then leave the path
         NOTE and TODO: works only for the circles not for complex path.
         """
-        if(abs(distance_to_path) < self.TOLERANCE() and
-         self.is_destination_opposite_to_wall(distance_to_destination) and 
-         self.path_started): # is robot started following wall!
+        if(abs(distance_to_path) < self.TOLERANCE() and #
+            self.distance_to_goal < self.distance_when_left and
+            self.is_destination_opposite_to_wall(distance_to_destination) and 
+            self.path_started): # is robot started following wall!
             self.wp_wf_stop = Point(x,y);
             return True;
 
