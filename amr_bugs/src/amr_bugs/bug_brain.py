@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+PACKAGE = 'amr_bugs'
+
 import rospy
 import math
 import planar
@@ -167,7 +169,7 @@ class BugBrain:
         if destenation on the opposit side of wall then leave the path
         NOTE and TODO: works only for the circles not for complex path.
         """
-        if(abs(distance_to_path) < self.TOLERANCE() and #
+        if(abs(distance_to_path) < self.TOLERANCE() and
             self.distance_to_goal < self.distance_when_left and
             self.is_destination_opposite_to_wall(distance_to_destination) and 
             self.path_started): # is robot started following wall!
